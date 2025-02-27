@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuthenTalk - Accent Calibration</title>
+  <style>
+    :root {
+      --primary: #6C63FF;
+      --secondary: #4AC7FA;
+      --dark: #1A1A2E;
+      --light: #F7F7FF;
+      --success: #00F5D4;
+      --warning: #FF7D00;
+      --danger: #FF5470;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--dark), #16213E);
+      color: var(--light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 90%;
+      max-width: 800px;
+      background: rgba(26, 26, 46, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 2rem 0;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .subtitle {
+      font-size: 1rem;
+      opacity: 0.8;
+    }
+    
+    .step {
+      display: none;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    .step.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .passage {
+      font-size: 1.5rem;
+      line-height: 1.6;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .instruction {
+      margin-bottom: 2rem;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .mic-icon {
+      width: 50px;
+      height: 50px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, background 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .mic-icon:hover {
+      transform: scale(1.05);
+      background: var(--secondary);
+    }
+    
+    .mic-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+    
+    .btn {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 0 auto;
+      box-shadow: 0 4px 20px rgba(108, 99, 255, 0.5);
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(108, 99, 255, 0.6);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn svg {
+      width: 18px;
+      height: 18px;
+      fill: white;
+    }
+    
+    .progress-container {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      margin: 2rem 0;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      border-radius: 5px;
+      transition: width 0.5s ease;
+    }
+    
+    .wave-container {
+      height: 100px;
+      width: 100%;
+      margin: 2rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .wave {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+    
+    .wave-bar {
+      width: 8px;
+      height: 5px;
+      background: var(--primary);
+      border-radius: 3px;
+      margin: 0 2px;
+      transition: height 0.2s ease;
+    }
+    
+    .accent-result {
+      text-align: center;
+      margin: 2rem 0;
+      font-size: 1.5rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .accent-name {
+      font-weight: bold;
+      color: var(--success);
+      letter-spacing: 1px;
+    }
+    
+    .accent-map {
+      width: 100%;
+      height: 300px;
+      background: url('/api/placeholder/800/300') center/cover;
+      border-radius: 10px;
+      margin: 2rem 0;
+      position: relative;
+    }
+    
+    .map-pin {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: var(--success);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      top: 50%;
+      left: 50%;
+      box-shadow: 0 0 0 rgba(0, 245, 212, 0.6);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(0, 245, 212, 0.6);
+      }
+      70% {
+        box-shadow: 0 0 0 15px rgba(0, 245, 212, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(0, 245, 212, 0);
+      }
+    }
+    
+    .audio-comparison {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    
+    .audio-panel {
+      flex: 1;
+      min-width: 250px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .audio-panel h3 {
+      margin-bottom: 1rem;
+      color: var(--light);
+    }
+    
+    .audio-player {
+      width: 100%;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .audio-control {
+      width: 30px;
+      height: 30px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    
+    .audio-control svg {
+      width: 12px;
+      height: 12px;
+      fill: white;
+    }
+    
+    .audio-progress {
+      flex: 1;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      position: relative;
+    }
+    
+    .audio-progress-fill {
+      position: absolute;
+      height: 100%;
+      width: 0;
+      background: var(--primary);
+      border-radius: 3px;
+      transition: width 0.1s linear;
+    }
+    
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    
+    .particle {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translateY(0px) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-20px) rotate(180deg);
+      }
+      100% {
+        transform: translateY(0px) rotate(360deg);
+      }
+    }
+    
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      width: 100%;
+    }
+    
+    .progress-steps {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+      gap: 8px;
+    }
+    
+    .step-indicator {
+      width: 40px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      transition: background 0.3s ease;
+    }
+    
+    .step-indicator.active {
+      background: var(--primary);
+    }
+    
+    .loader {
+      border: 5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 5px solid var(--primary);
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 2rem auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .highlight {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .highlight::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 30%;
+      bottom: 0;
+      left: 0;
+      background: rgba(108, 99, 255, 0.2);
+      z-index: -1;
+      transform: skew(-15deg);
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        width: 95%;
+        padding: 1.5rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .passage {
+        font-size: 1.2rem;
+        padding: 1rem;
+      }
+      
+      .audio-comparison {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  
+  <div class="container">
+    <header>
+      <h1>Authen<span class="highlight">Talk</span></h1>
+      <p class="subtitle">AI-Powered Accent Calibration System</p>
+    </header>
+    
+    <div class="progress-steps">
+      <div class="step-indicator active" data-step="1"></div>
+      <div class="step-indicator" data-step="2"></div>
+      <div class="step-indicator" data-step="3"></div>
+      <div class="step-indicator" data-step="4"></div>
+    </div>
+    
+    <!-- Step 1: Display & Read Aloud -->
+    <div class="step active" id="step1">
+      <div class="passage" id="reading-passage">
+        The quick brown fox jumps over the lazy dog. Please read this sentence aloud to begin your accent calibration session.
+      </div>
+      
+      <div class="instruction">
+        <div class="mic-icon" id="mic-button">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+        </div>
+        <span>Please read the text aloud to begin your accent calibration</span>
+      </div>
+      
+      <button class="btn" id="start-recording">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>
+        Start Recording
+      </button>
+    </div>
+    
+    <!-- Step 2: Speech Analysis Simulation -->
+    <div class="step" id="step2">
+      <h2>Analyzing Your Speech</h2>
+      
+      <div class="wave-container">
+        <div class="wave" id="wave-visualization"></div>
+      </div>
+      
+      <div class="progress-container">
+        <div class="progress-bar" id="analysis-progress"></div>
+      </div>
+      
+      <p class="instruction" style="text-align: center;">
+        <span id="analysis-status">Analyzing your speech pattern...</span>
+      </p>
+      
+      <div class="loader"></div>
+    </div>
+    
+    <!-- Step 3: Real-Time Accent Identification -->
+    <div class="step" id="step3">
+      <h2>Accent Analysis Complete</h2>
+      
+      <div class="accent-result">
+        Detected Accent: <span class="accent-name" id="detected-accent">Received Pronunciation</span>
+      </div>
+      
+      <div class="accent-map">
+        <div class="map-pin" id="accent-pin"></div>
+      </div>
+      
+      <p class="instruction" style="text-align: center;">
+        Your speech pattern has been successfully analyzed.
+      </p>
+      
+      <button class="btn" id="continue-to-transform">
+        Continue to Accent Transformation
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Step 4: AI-Driven Accent Transformation -->
+    <div class="step" id="step4">
+      <h2>AI-Driven Accent Transformation</h2>
+      
+      <div class="audio-comparison">
+        <div class="audio-panel">
+          <h3>Original Accent</h3>
+          <div class="audio-player">
+            <div class="audio-control" id="play-original">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+            <div class="audio-progress">
+              <div class="audio-progress-fill" id="original-progress"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="audio-panel">
+          <h3>Transformed Accent</h3>
+          <div class="audio-player">
+            <div class="audio-control" id="play-transformed">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+            <div class="audio-progress">
+              <div class="audio-progress-fill" id="transformed-progress"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <p class="instruction" style="text-align: center;">
+        Your accent transformation is now ready! Compare your original accent with the calibrated version.
+      </p>
+      
+      <button class="btn" id="restart-calibration">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+        Start New Calibration
+      </button>
+    </div>
+    
+    <div class="navigation">
+      <button class="btn" id="prev-step" style="visibility: hidden;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+        Back
+      </button>
+      <button class="btn" id="next-step" style="visibility: hidden;">
+        Next
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    // Generate particles for background
+    const particles = document.getElementById('particles');
+    
+    for (let i = 0; i < 50; i++) {
+      const particle = document.createElement('div');
+      particle.classList.add('particle');
+      
+      const size = Math.random() * 10 + 2;
+      const posX = Math.random() * window.innerWidth;
+      const posY = Math.random() * window.innerHeight;
+      const duration = Math.random() * 10 + 5;
+      const delay = Math.random() * 5;
+      
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.left = `${posX}px`;
+      particle.style.top = `${posY}px`;
+      particle.style.animation = `float ${duration}s infinite ${delay}s`;
+      
+      particles.appendChild(particle);
+    }
+    
+    // Generate wave visualization bars
+    const waveContainer = document.getElementById('wave-visualization');
+    
+    for (let i = 0; i < 30; i++) {
+      const bar = document.createElement('div');
+      bar.classList.add('wave-bar');
+      waveContainer.appendChild(bar);
+    }
+    
+    // Step navigation
+    let currentStep = 1;
+    const totalSteps = 4;
+    
+    const steps = document.querySelectorAll('.step');
+    const stepIndicators = document.querySelectorAll('.step-indicator');
+    const prevButton = document.getElementById('prev-step');
+    const nextButton = document.getElementById('next-step');
+    
+    function showStep(stepNumber) {
+      steps.forEach(step => step.classList.remove('active'));
+      stepIndicators.forEach(indicator => indicator.classList.remove('active'));
+      
+      document.getElementById(`step${stepNumber}`).classList.add('active');
+      stepIndicators[stepNumber - 1].classList.add('active');
+      
+      currentStep = stepNumber;
+      
+      // Show/hide navigation buttons
+      prevButton.style.visibility = stepNumber > 1 ? 'visible' : 'hidden';
+      nextButton.style.visibility = stepNumber < totalSteps ? 'visible' : 'hidden';
+      
+      // Run step-specific functions
+      if (stepNumber === 2) {
+        simulateSpeechAnalysis();
+      } else if (stepNumber === 3) {
+        simulateAccentDetection();
+      } else if (stepNumber === 4) {
+        setupAudioPlayers();
+      }
+    }
+    
+    prevButton.addEventListener('click', () => {
+      if (currentStep > 1) {
+        showStep(currentStep - 1);
+      }
+    });
+    
+    nextButton.addEventListener('click', () => {
+      if (currentStep < totalSteps) {
+        showStep(currentStep + 1);
+      }
+    });
+    
+    // Step 1 functionality
+    const startRecordingBtn = document.getElementById('start-recording');
+    const micButton = document.getElementById('mic-button');
+    
+    startRecordingBtn.addEventListener('click', () => {
+      startRecordingBtn.disabled = true;
+      animateMicButton();
+      setTimeout(() => {
+        showStep(2);
+        startRecordingBtn.disabled = false;
+      }, 1500);
+    });
+    
+    micButton.addEventListener('click', () => {
+      startRecordingBtn.click();
+    });
+    
+    function animateMicButton() {
+      micButton.style.transform = 'scale(1.2)';
+      micButton.style.background = 'var(--danger)';
+      
+      setTimeout(() => {
+        micButton.style.transform = '';
+        micButton.style.background = '';
+      }, 1500);
+    }
+    
+    // Step 2 functionality
+    function simulateSpeechAnalysis() {
+      const progressBar = document.getElementById('analysis-progress');
+      const statusText = document.getElementById('analysis-status');
+      const waveBars = document.querySelectorAll('.wave-bar');
+      
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 1;
+        progressBar.style.width = `${progress}%`;
+        
+        // Update status text
+        if (progress < 30) {
+          statusText.textContent = 'Analyzing speech patterns...';
+        } else if (progress < 60) {
+          statusText.textContent = 'Identifying phonetic characteristics...';
+        } else if (progress < 90) {
+          statusText.textContent = 'Matching accent profiles...';
+        } else {
+          statusText.textContent = 'Finalizing accent detection...';
+        }
+        
+        // Animate wave visualization
+        waveBars.forEach(bar => {
+          const height = Math.random() * 80 + 5;
+          bar.style.height = `${height}px`;
+        });
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            showStep(3);
+          }, 500);
+        }
+      }, 40);
+    }
+    
+    // Step 3 functionality
+    function simulateAccentDetection() {
+      const pin = document.getElementById('accent-pin');
+      const detectedAccent = document.getElementById('detected-accent');
+      
+      // Randomly position pin on map (for demo purposes)
+      const mapWidth = document.querySelector('.accent-map').offsetWidth;
+      const mapHeight = document.querySelector('.accent-map').offsetHeight;
+      
+      // Animate pin placement
+      setTimeout(() => {
+        pin.style.left = '65%';
+        pin.style.top = '40%';
+        
+        // Randomly select an accent from array
+        const accents = [
+          'Received Pronunciation',
+          'General American',
+          'Scottish English',
+          'Australian English',
+          'Canadian English'
+        ];
+        const randomAccent = accents[Math.floor(Math.random() * accents.length)];
+        detectedAccent.textContent = randomAccent;
+      }, 800);
+    }
+    
+    // Step 4 functionality
+    const continueBtn = document.getElementById('continue-to-transform');
+    continueBtn.addEventListener('click', () => {
+      showStep(4);
+    });
+    
+    function setupAudioPlayers() {
+      const originalPlayBtn = document.getElementById('play-original');
+      const transformedPlayBtn = document.getElementById('play-transformed');
+      const originalProgress = document.getElementById('original-progress');
+      const transformedProgress = document.getElementById('transformed-progress');
+      
+      let originalInterval, transformedInterval;
+      
+      originalPlayBtn.addEventListener('click', () => {
+        clearInterval(transformedInterval);
+        transformedProgress.style.width = '0';
+        
+        let progress = 0;
+        clearInterval(originalInterval);
+        originalInterval = setInterval(() => {
+          progress += 1;
+          originalProgress.style.width = `${progress}%`;
+          
+          if (progress >= 100) {
+            clearInterval(originalInterval);
+          }
+        }, 50);
+      });
+      
+      transformedPlayBtn.addEventListener('click', () => {
+        clearInterval(originalInterval);
+        originalProgress.style.width = '0';
+        
+        let progress = 0;
+        clearInterval(transformedInterval);
+        transformedInterval = setInterval(() => {
+          progress += 1;
+          transformedProgress.style.width = `${progress}%`;
+          
+          if (progress >= 100) {
+            clearInterval(transformedInterval);
+          }
+        }, 50);
+      });
+    }
+    
+    // Restart calibration
+    const restartBtn = document.getElementById('restart-calibration');
+    restartBtn.addEventListener('click', () => {
+      // Reset all progress and return to step 1
+      document.getElementById('analysis-progress').style.width = '0';
+      document.getElementById('original-progress').style.width = '0';
+      document.getElementById('transformed-progress').style.width = '0';
+      showStep(1);
+    });
+    
+    // Highlight text in passage as it's being read
+    const passage = document.getElementById('reading-passage');
+    const words = passage.textContent.split(' ');
+    
+    // Add function for text highlighting (can be triggered when recording starts)
+    function highlightText() {
+      passage.innerHTML = '';
+      
+      words.forEach((word, index) => {
+        const span = document.createElement('span');
+        span.textContent = word + ' ';
+        span.style.opacity = '0.6';
+        span.style.transition = 'opacity 0.2s ease';
+        passage.appendChild(span);
+        
+        setTimeout(() => {
+          // Highlight current word
+          span.style.opacity = '1';
+          span.style.color = 'var(--success)';
+          
+          // Return previous word to normal
+          if (index > 0) {
+            passage.children[index - 1].style.opacity = '0.6';
+            passage.children[index - 1].style.color = '';
+          }
+        }, index * 400);
+      });
+    }
+    
+    // Trigger highlight when recording starts
+    startRecordingBtn.addEventListener('click', highlightText);
+  </script>
+</body>
+</html>
